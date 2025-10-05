@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tasks</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #AEC6CF; /* พาสเทลฟ้า */
+            padding: 20px;
+        }
+
+        /* Header งานของ user */
+        .header-block {
+            background: rgba(255,255,255,0.7); /* พื้นหลังโปร่งแสง */
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .header-block:hover {
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            transform: translateY(-3px);
+        }
+
+        .header-block h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: #333;
+        }
+
+        /* บล็อกทั่วไป */
+        .block { 
+            background: rgba(255,255,255,0.6); 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+
+        .block:hover {
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 12px 40px 0 rgba(0,0,0,0.25);
+            transform: translateY(-3px);
+        }
+
+        h2 { margin-top: 0; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+
+        .finished { color: #28A745; } /* เสร็จแล้ว สีเขียว */
+        .unfinished { color: #FF6B6B; } /* ยังไม่เสร็จ สีแดง */
+        input, button { padding: 5px; margin-right: 10px; }
+        form { margin-bottom: 20px; display: inline; }
+
+        /* ปุ่มสถานะ */
+        button.status-btn.finished { background: #77DD77; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        button.status-btn.unfinished { background: #FF6B6B; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        button.status-btn.finished:hover { background: #55AA55; }
+        button.status-btn.unfinished:hover { background: #FF4C4C; }
+
+        /* ปุ่มแก้ไข / ลบ */
+        button.edit-btn { background: #333; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        button.edit-btn:hover { background: #555; }
+
+        button.delete-btn { background: #FF4C4C; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        button.delete-btn:hover { background: #FF1C1C; }
+
+        /* ลิงก์ชื่องาน clickable */
+        a.task-link {
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a.task-link.finished { color: #28A745; }
+        a.task-link.unfinished { color: #FF6B6B; }
+
+        a.task-link:hover { text-decoration: underline; }
+
+        /* เพิ่มงานใหม่ */
+        .add-task-form { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+        .add-task-form input { flex: 1 1 150px; }
+    </style>
+</head>
+<body>
+
+<!-- Header งานของ user -->
+<div class="header-block">
+    <h1 th:text="'งานของ ' + ${username}">งานของ User</h1>
+</div>
+
+<!-- Form เพิ่มงาน -->
+<div class="block">
+    <h2>เพิ่มงานใหม่</h2>
+    <form th:action="@{/tasks/add}" method="post" class="add-task-form">
+        <input type="text" name="title" placeholder="ชื่อการบ้าน" required/>
+        <input type="text" name="subjectName" placeholder="รหัสวิชา" required/>
+        <button type="submit">เพิ่มงาน</button>
+    </form>
+</div>
+
+<!-- แสดงงานแบ่งตามตัวอักษรแรกของชื่อวิชา -->
+<div th:if="${groupedTasks != null}">
+    <div th:each="entry : ${groupedTasks}" class="block">
+        <h2 th:text="${entry.key}">A</h2>
+        <ul>
+            <li th:each="task : ${entry.value}">
+                <!-- ปุ่มลบ -->
+                <form th:action="@{/tasks/delete/{id}(id=${task.id})}" method="get" style="display:inline">
+                    <button type="submit" class="delete-btn">ลบ</button>
+                </form>
+
+                <!-- ชื่องาน clickable -->
+                <a th:href="@{/tasks/view/{id}(id=${task.id})}" 
+                   th:text="${task.title}" 
+                   th:class="'task-link ' + (${task.finished} ? 'finished' : 'unfinished')"></a>
+                (<span th:text="${task.subject.name}" th:class="${task.finished} ? 'finished' : 'unfinished'"></span>)
+
+                <!-- ปุ่มสถานะ -->
+                <form th:action="@{/tasks/toggle-status/{id}(id=${task.id})}" method="post" style="display:inline">
+                    <button type="submit" th:class="'status-btn ' + (${task.finished} ? 'finished' : 'unfinished')" 
+                            th:text="${task.finished} ? 'เสร็จแล้ว' : 'ยังไม่เสร็จ'"></button>
+                </form>
+
+                <!-- ปุ่มแก้ไข -->
+                <form th:action="@{/tasks/edit/{id}(id=${task.id})}" method="get" style="display:inline">
+                    <button type="submit" class="edit-btn">แก้ไข</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<a th:href="@{/auth/logout}">ออกจากระบบ</a>
+
+</body>
+</html>
