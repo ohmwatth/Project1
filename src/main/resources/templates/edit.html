@@ -1,0 +1,14 @@
+<!-- src/main/resources/templates/edit_profile.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Edit Profile</title></head>
+<body>
+<h2>แก้ไขข้อมูลผู้ใช้</h2>
+<form th:action="@{/user/edit}" method="post">
+    <label>Email: <input type="email" name="email" th:value="${user.email}" /></label><br/>
+    <label>Full name: <input type="text" name="fullName" th:value="${user.fullName}" /></label><br/>
+    <button type="submit">บันทึก</button>
+</form>
+<p th:text="${message}"></p>
+</body>
+</html>
